@@ -5,21 +5,33 @@ from inspect import currentframe
 from textwrap import indent
 from colorsys import rgb_to_hls, rgb_to_hsv, rgb_to_yiq
 
-class AutoAddSelectorNotFoundInScope(Exception):
-    pass
 
+def render(obj):
+    if hasattr(obj, '__render__'):
+        return obj.__render__()
+    elif obj is None: 
+        return "none" # None requires specific serialization.
+    else:
+        return f"{obj}" # Serialize to string
+        
 @dataclass
 class ColorValue:
     red: int
     green: int
     blue: int
     typ: str = "rgb"
-
+    
+    def __render__(self):
+        return f"rgb({self.red}, {self.green}, {self.blue})" if self.typ == "rgb" else f"#{self.red}{self.green}{self.blue}"
+        
 @dataclass
 class NumericValue:
     value: Union[float, int]
     unit: str
-    
+
+    def __render__(self):
+        return f"{self.value}{self.unit}"
+        
 @dataclass
 class Style:
     name: str
@@ -27,13 +39,17 @@ class Style:
     important: bool = False
 
     def __post_init__(self):
-        self.value = CSS.cast(self.value)
-        f = currentframe().f_back.f_back.f_globals
-        if f.get("DARWCSS_AUTO", False):
+        self.value = render(self.value)
+        f = currentframe().f_back.f_back
+        l, g = f.f_locals, f.f_globals
+        if l.get("DARWCSS_AUTO", g.get("DARWCSS_AUTO", False)):
             try:
-                f[f.get("DARWCSS_SELECTOR", 'selector')].append(self)
+                selector_name = l.get("DARWCSS_SELECTOR", g.get("DARWCSS_SELECTOR", "selector"))
+                selector = l[selector_name]
             except KeyError as exc:
-                raise AutoAddSelectorNotFoundInScope from exc
+                raise NameError(f"Selector can not found in local namespace.") from exc
+            else:
+                selector.append(self)
 
 @dataclass
 class Selector:
@@ -62,28 +78,5 @@ class CSS:
             yield selector.styles
         finally:
             self.selectors.append(selector)
-
-    @staticmethod
-    def cast(value):
-        if isinstance(value, str):
-            return value
-        
-        elif isinstance(value, float) or isinstance(value, int):
-            return f"{value}" # casts value to string with fstring's performance instead of str() call
-        
-        elif isinstance(value, NumericValue):
-            return f"{value.value}{value.unit}"
-            
-        elif isinstance(value, ColorValue):
-            if value.typ == "rgb":
-                return f"rgb({value.red}, {value.green}, {value.blue})"
-            elif value.typ == "hsl":
-                return f"hsl({value.red}, {value.green}%, {value.blue}%)"
-            elif value.typ == "hex":
-                return f"#{value.red}{value.green}{value.blue}"
-            else:
-                return "black"
-        else:
-            return "none"
             
     __call__ = render
