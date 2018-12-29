@@ -12,5 +12,8 @@ class TestMisc(unittest.TestCase):
         self.assertEqual(border_style.value, "5px solid rgb(255, 0, 0)")
 
 
+    def test_numeric_plus_color(self):
+        self.assertEqual(NumericValue(15, "%") + ColorValue("ff","ff","ff","hex"), "15% #ffffff")
+        
 if __name__ == "__main__":
     unittest.main()
