@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="darwcss",
-    version="0.2",
+    version="0.2.1",
     author="BTaskaya",
     author_email="batuhanosmantaskaya@gmail.com",
     packages=find_packages(),
