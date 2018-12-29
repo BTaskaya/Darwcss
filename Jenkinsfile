@@ -34,6 +34,15 @@ pipeline {
                    """
             }
         }
+        stage('deploy_docs') {
+            environment {
+                RTD = credentials('rtd-endpoint')
+                TOKEN = credentials('rtd-token')
+            }
+            steps {
+                sh 'curl -X POST -d branches=master -d token=$TOKEN https://$RTD'
+            }
+        }
     }
     post {
         always {
