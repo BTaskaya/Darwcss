@@ -13,9 +13,19 @@ def render(obj):
         return "none" # None requires specific serialization.
     else:
         return f"{obj}" # Serialize to string
+
+class RenderableObject:
+    def __render__(self):
+        pass
+    
+    def __add__(self, other):
+        return f"{render(self)} {render(other)}"
+    
+    def __radd__(self, other):
+        return f"{render(other)} {render(self)}"
         
 @dataclass
-class ColorValue:
+class ColorValue(RenderableObject):
     red: int
     green: int
     blue: int
@@ -25,7 +35,7 @@ class ColorValue:
         return f"rgb({self.red}, {self.green}, {self.blue})" if self.typ == "rgb" else f"#{self.red}{self.green}{self.blue}"
         
 @dataclass
-class NumericValue:
+class NumericValue(RenderableObject):
     value: Union[float, int]
     unit: str
 
@@ -55,7 +65,16 @@ class Style:
 class Selector:
     area: str
     styles: List[Style] = field(default_factory=list)
-
+    
+    def __add__(self, other):
+        self.styles.append(other)
+        
+    def __iadd__(self, other):
+        self + other
+        return self
+    
+    def append(self, other):
+        self.styles.append(other)
 
 class CSS:
     def __init__(self, conf=None):
@@ -75,7 +94,7 @@ class CSS:
     def selector(self, area):
         selector = Selector(area)
         try:
-            yield selector.styles
+            yield selector
         finally:
             self.selectors.append(selector)
             

@@ -19,6 +19,5 @@ class TestRender(unittest.TestCase):
     def test_render_string_converter(self):
         self.assertEqual(render(32), "32")
 
-        
 if __name__ == '__main__':
     unittest.main()

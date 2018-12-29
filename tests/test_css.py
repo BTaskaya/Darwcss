@@ -11,6 +11,14 @@ class TestCSS(unittest.TestCase):
             selector.append(Style('c', 'd'))
         
         self.assertEqual(css.render(), self.rendered_css)
+        
+    def test_css_with_iadd(self):
+        css = CSS()
+        with css.selector('.home') as selector:
+            selector += Style('a', 'b')
+            selector += Style('c', 'd')
+        
+        self.assertEqual(css.render(), self.rendered_css)
     
     def test_css_auto_add(self):
         css = CSS()
