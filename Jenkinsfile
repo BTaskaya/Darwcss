@@ -30,7 +30,7 @@ pipeline {
             }
             steps {
                 sh """. .venv/bin/activate
-                    twine upload -u $PYPI_USR -p $PYPI_PSW -r $PYPI_HOST dist/*
+                    twine upload -u $PYPI_USR -p $PYPI_PSW --repository-url $PYPI_HOST dist/*
                    """
             }
         }
