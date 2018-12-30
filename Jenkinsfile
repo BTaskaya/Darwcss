@@ -4,7 +4,7 @@ pipeline {
         stage('prepare') {
             steps {
                 sh 'python -m venv .venv'
-                sh """. .venv/bin/activate 
+                sh """. .venv/bin/activate
                     pip install pytest twine mypy flake8 mccabe flake8-junit-report
                     pip install -e ."""
             }
@@ -62,6 +62,7 @@ pipeline {
     }
     post {
         always {
+            sh 'cat test_*.xml'
             junit 'test_*.xml'
         }
     }
