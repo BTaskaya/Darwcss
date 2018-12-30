@@ -2,6 +2,8 @@ pipeline {
     agent { docker { image 'python:3.7.1' } }
     environment {
         WEBHOOK_DISCORD = credentials('discord-webhook-1')
+        TELEGRAM_TOKEN = credentials('telegram-1')
+        TELEGRAM_CHAT = credentials('telegram-chat')
     }
     stages {
         stage('prepare') {
@@ -73,6 +75,10 @@ pipeline {
                 curl -H "Content-Type: application/json" \
                 -X POST \
                 -d '{"content":"Jenkins information","embeds":[{"title":"Jenkins build ","description":"Your ${env.BUILD_NUMBER}th ${currentBuild.fullDisplayName} [build](${env.BUILD_URL}) on ${BRANCH_NAME} resulted with Success","url":"${env.BUILD_URL}","color":65347,"thumbnail":{"url":"https://jenkins.io/images/logos/san-diego/san-diego.png"},"image":{"url":"https://cdn1.iconfinder.com/data/icons/basic-ui-icon-rounded-colored/512/icon-41-512.png"},"author":{"name":"Jenkins build node ${NODE_NAME}","url":"https://ci.kernel.live","icon_url":"https://wiki.jenkins.io/download/attachments/2916393/logo.png?version=1&modificationDate=1302753947000&api=v2"}}]}' $WEBHOOK_DISCORD
+               """
+            
+            sh """
+                curl --globoff -i -X GET "https://api.telegram.org/bot$TELEGRAM_TOKEN/sendMessage?chat_id=$TELEGRAM_CHAT&text='Your ${env.BUILD_NUMBER}th ${currentBuild.fullDisplayName} [build](${env.BUILD_URL}) on ${BRANCH_NAME} resulted with Success'"
                """
         }
         unstable {
