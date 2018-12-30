@@ -5,7 +5,7 @@ pipeline {
             steps {
                 sh 'python -m venv .venv'
                 sh """. .venv/bin/activate 
-                    pip install pytest twine mypy flake8 mccabe lake8-junit-repor
+                    pip install pytest twine mypy flake8 mccabe flake8-junit-report
                     pip install -e ."""
             }
         }
