@@ -47,7 +47,7 @@ pipeline {
             steps {
                 sh """. .venv/bin/activate
                     twine upload -u $LOCAL_PYPI_USR -p $LOCAL_PYPI_PSW --repository-url $LOCAL_PYPI_HOST dist/*
-                    twine upload -u $GLOBAL_PYPI_USR -p $GLOBAL_PYPI_PSW dist/*
+                    twine upload -u $GLOBAL_PYPI_USR -p $GLOBAL_PYPI_PSW dist/* || true
                    """
             }
         }
