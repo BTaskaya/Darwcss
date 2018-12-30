@@ -51,6 +51,21 @@ class TestCSS(unittest.TestCase):
             with self.assertRaises(NameError):
                 Style("a", "b")
 
+    def test_css_getitem(self):
+        css = CSS()
+        with css.selector(".home") as selector:
+            selector.append(Style("a", "b"))
+            selector.append(Style("c", "d"))
+
+        self.assertEqual(css['cls_home'].styles[0], Style("a", "b"))
+        
+    def test_css_getattr(self):
+        css = CSS()
+        with css.selector(".home") as selector:
+            selector.append(Style("a", "b"))
+            selector.append(Style("c", "d"))
+
+        self.assertEqual(css.cls_home.styles[0], Style("a", "b"))
 
 if __name__ == "__main__":
     unittest.main()

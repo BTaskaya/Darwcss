@@ -8,6 +8,16 @@ from colorsys import rgb_to_hls
 from enum import Enum
 
 
+def clean_name(css_name: str) -> str:
+    if css_name.startswith('.'):
+        css_name = css_name.replace('.', 'cls_', 1)
+    elif css_name.startswith('#'):
+        css_name = css_name.replace('#', 'id_', 1)
+    else:
+        pass
+    
+    return css_name
+        
 def render(obj: Any) -> str:
     if hasattr(obj, "__render__"):
         return obj.__render__()
@@ -107,12 +117,12 @@ class Selector:
 
 class CSS:
     def __init__(self, conf: Optional[Dict] = None) -> None:
-        self.selectors: List[Selector] = []
+        self.selectors: Dict[str, Selector] = {}
         self.conf = conf or {}
 
     def render(self) -> str:
         css = ""
-        for selector in self.selectors:
+        for selector in self.selectors.values():
             rules = ""
             for style in selector.styles:
                 rules += f"{style.name}: {style.value}{' !important' if style.important else ''};\n"
@@ -125,6 +135,10 @@ class CSS:
         try:
             yield selector
         finally:
-            self.selectors.append(selector)
+            self.selectors[clean_name(area)] = selector
 
+    def __getitem__(self, key: str) -> Selector:
+        return self.selectors[key]
+        
     __call__ = render
+    __getattr__ = __getitem__
