@@ -20,8 +20,7 @@ pipeline {
             steps {
                 sh """. .venv/bin/activate
                     flake8 --max-complexity 7 --output-file --ignore E501 flake8_results.txt darwcss/ || true
-                    flake8_junit flake8_results.txt test_flake8.xml
-                    rm flake8_results.txt
+                    [ -f flake8_results.txt ] && flake8_junit flake8_results.txt test_flake8.xml;rm flake8_results.txt || true
                    """
             }
         }
