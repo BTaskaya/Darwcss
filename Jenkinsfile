@@ -19,7 +19,7 @@ pipeline {
         stage('mypy') {
             steps {
                 sh """. .venv/bin/activate
-                    mypy --junit-xml=test_annotations.xml darwcss/
+                    mypy --junit-xml=test_mpy.xml darwcss/
                    """
             }
         }
