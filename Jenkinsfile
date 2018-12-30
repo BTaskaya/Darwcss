@@ -72,21 +72,21 @@ pipeline {
             sh """
                 curl -H "Content-Type: application/json" \
                 -X POST \
-                -d '{"content":"abc","embed":{"title":"Jenkins build ","description":"Your ${env.BUILD_NUMBER}th ${currentBuild.fullDisplayName} [build](${env.BUILD_URL}) on ${BRANCH_NAME} resulted with Success","url":"${env.BUILD_URL}","color":65347,"thumbnail":{"url":"https://jenkins.io/images/logos/san-diego/san-diego.png"},"image":{"url":"https://cdn1.iconfinder.com/data/icons/basic-ui-icon-rounded-colored/512/icon-41-512.png"},"author":{"name":"Jenkins build node ${NODE_NAME}","url":"https://ci.kernel.live","icon_url":"https://wiki.jenkins.io/download/attachments/2916393/logo.png?version=1&modificationDate=1302753947000&api=v2"}}}' $WEBHOOK_DISCORD
+                -d '{"content":"Jenkins information","embeds":[{"title":"Jenkins build ","description":"Your ${env.BUILD_NUMBER}th ${currentBuild.fullDisplayName} [build](${env.BUILD_URL}) on ${BRANCH_NAME} resulted with Success","url":"${env.BUILD_URL}","color":65347,"thumbnail":{"url":"https://jenkins.io/images/logos/san-diego/san-diego.png"},"image":{"url":"https://cdn1.iconfinder.com/data/icons/basic-ui-icon-rounded-colored/512/icon-41-512.png"},"author":{"name":"Jenkins build node ${NODE_NAME}","url":"https://ci.kernel.live","icon_url":"https://wiki.jenkins.io/download/attachments/2916393/logo.png?version=1&modificationDate=1302753947000&api=v2"}}]}' $WEBHOOK_DISCORD
                """
         }
         unstable {
             sh """
                 curl -H "Content-Type: application/json" \
                 -X POST \
-                -d '{"content":"abc","embed":{"title":"Jenkins build ","description":"Your ${env.BUILD_NUMBER}th ${currentBuild.fullDisplayName} [build](${env.BUILD_URL}) on ${BRANCH_NAME} resulted with Success","url":"${env.BUILD_URL}","color":16752128,"thumbnail":{"url":"https://jenkins.io/images/logos/san-diego/san-diego.png"},"image":{"url":"https://cdn1.iconfinder.com/data/icons/map-objects/154/map-object-warning-attention-point-512.png"},"author":{"name":"Jenkins build node ${NODE_NAME}","url":"https://ci.kernel.live","icon_url":"https://wiki.jenkins.io/download/attachments/2916393/logo.png?version=1&modificationDate=1302753947000&api=v2"}}}' $WEBHOOK_DISCORD
+                -d '{"content":"Jenkins information","embeds":[{"title":"Jenkins build ","description":"Your ${env.BUILD_NUMBER}th ${currentBuild.fullDisplayName} [build](${env.BUILD_URL}) on ${BRANCH_NAME} resulted with Unstability","url":"${env.BUILD_URL}","color":16752128,"thumbnail":{"url":"https://jenkins.io/images/logos/san-diego/san-diego.png"},"image":{"url":"https://cdn1.iconfinder.com/data/icons/map-objects/154/map-object-warning-attention-point-512.png"},"author":{"name":"Jenkins build node ${NODE_NAME}","url":"https://ci.kernel.live","icon_url":"https://wiki.jenkins.io/download/attachments/2916393/logo.png?version=1&modificationDate=1302753947000&api=v2"}}]}' $WEBHOOK_DISCORD
                """
         }
         failure {
             sh """
                 curl -H "Content-Type: application/json" \
                 -X POST \
-                -d '{"content":"abc","embed":{"title":"Jenkins build ","description":"Your ${env.BUILD_NUMBER}th ${currentBuild.fullDisplayName} [build](${env.BUILD_URL}) on ${BRANCH_NAME} resulted with Success","url":"${env.BUILD_URL}","color":16711680,"thumbnail":{"url":"https://jenkins.io/images/logos/san-diego/san-diego.png"},"image":{"url":"https://cdn4.iconfinder.com/data/icons/unigrid-flat-basic/90/019_023_link_chain_broken_disconnect_2-512.png"},"author":{"name":"Jenkins build node ${NODE_NAME}","url":"https://ci.kernel.live","icon_url":"https://wiki.jenkins.io/download/attachments/2916393/logo.png?version=1&modificationDate=1302753947000&api=v2"}}}' $WEBHOOK_DISCORD
+                -d '{"content":"Jenkins information","embeds":[{"title":"Jenkins build ","description":"Your ${env.BUILD_NUMBER}th ${currentBuild.fullDisplayName} [build](${env.BUILD_URL}) on ${BRANCH_NAME} resulted with Failure","url":"${env.BUILD_URL}","color":16711680,"thumbnail":{"url":"https://jenkins.io/images/logos/san-diego/san-diego.png"},"image":{"url":"https://cdn4.iconfinder.com/data/icons/unigrid-flat-basic/90/019_023_link_chain_broken_disconnect_2-512.png"},"author":{"name":"Jenkins build node ${NODE_NAME}","url":"https://ci.kernel.live","icon_url":"https://wiki.jenkins.io/download/attachments/2916393/logo.png?version=1&modificationDate=1302753947000&api=v2"}}]}' $WEBHOOK_DISCORD
                """
         }
     }
