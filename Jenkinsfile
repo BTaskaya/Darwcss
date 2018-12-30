@@ -40,12 +40,14 @@ pipeline {
         }
         stage('deploy_pypi') {
             environment {
-                PYPI = credentials('local-pypi')
-                PYPI_HOST = 'https://pypi.kernel.live'
+                LOCAL_PYPI = credentials('local-pypi')
+                LOCAL_PYPI_HOST = 'https://pypi.kernel.live'
+                GLOBAL_PYPI = credentials('global-pypi')
             }
             steps {
                 sh """. .venv/bin/activate
-                    twine upload -u $PYPI_USR -p $PYPI_PSW --repository-url $PYPI_HOST dist/*
+                    twine upload -u $LOCAL_PYPI_USR -p $LOCAL_PYPI_PSW --repository-url $LOCAL_PYPI_HOST dist/*
+                    twine upload -u $GLOBAL_PYPI_USR -p $GLOBAL_PYPI_PSW dist/*
                    """
             }
         }
