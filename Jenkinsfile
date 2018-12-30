@@ -78,7 +78,9 @@ pipeline {
                """
             
             sh """
-                curl --globoff -i -X GET "https://api.telegram.org/bot$TELEGRAM_TOKEN/sendMessage?chat_id=$TELEGRAM_CHAT&text='Your ${env.BUILD_NUMBER}th ${currentBuild.fullDisplayName} [build](${env.BUILD_URL}) on ${BRANCH_NAME} resulted with Success'"
+                export MESSAGE="%27Your%20${env.BUILD_NUMBER}th%20${currentBuild.fullDisplayName}%20build%20(${env.BUILD_URL})%20on%20${BRANCH_NAME}%20resulted%20with%20Success%27"
+                echo $MESSAGE
+                curl --globoff -i -X GET "https://api.telegram.org/bot617867531:AAFi2qnlfNWDM0evnY3CdRtJySVDAep3OVc/sendMessage?chat_id=420575894&text=${MESSAGE}"
                """
         }
         unstable {
