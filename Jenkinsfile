@@ -5,7 +5,7 @@ pipeline {
             steps {
                 sh 'python -m venv .venv'
                 sh """. .venv/bin/activate 
-                    pip install pytest twine mypy
+                    pip install pytest twine mypy flake8 mccabe lake8-junit-repor
                     pip install -e ."""
             }
         }
@@ -16,10 +16,19 @@ pipeline {
                    """
             }
         }
+        stage('flake8') {
+            steps {
+                sh """. .venv/bin/activate
+                    flake8 --max-complexity 7 --output-file flake8_results.txt darwc
+                    flake8_junit flake8_results.txt test_flake8.xml
+                    rm flake8_results.txt
+                   """
+            }
+        }
         stage('mypy') {
             steps {
                 sh """. .venv/bin/activate
-                    mypy --junit-xml=test_mpy.xml darwcss/
+                    mypy --junit-xml=test_mypy.xml darwcss/
                    """
             }
         }
