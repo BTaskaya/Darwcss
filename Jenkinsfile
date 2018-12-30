@@ -5,7 +5,7 @@ pipeline {
             steps {
                 sh 'python -m venv .venv'
                 sh """. .venv/bin/activate 
-                    pip install pytest twine
+                    pip install pytest twine mypy
                     pip install -e ."""
             }
         }
@@ -13,6 +13,13 @@ pipeline {
             steps {
                 sh """. .venv/bin/activate
                     pytest --junit-xml=test_results.xml tests/
+                   """
+            }
+        }
+        stage('mypy') {
+            steps {
+                sh """. .venv/bin/activate
+                    mypy --junit-xml=test_annotations.xml darwcss/
                    """
             }
         }
@@ -47,6 +54,7 @@ pipeline {
     post {
         always {
             junit 'test_results.xml'
+            junit 'test_annotations.xml'
         }
     }
 }
