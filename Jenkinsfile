@@ -75,12 +75,6 @@ pipeline {
                 -X POST \
                 -d '{"content":"Jenkins information","embeds":[{"title":"Jenkins build ","description":"Your ${env.BUILD_NUMBER}th ${currentBuild.fullDisplayName} [build](${env.BUILD_URL}) on ${BRANCH_NAME} resulted with Success","url":"${env.BUILD_URL}","color":65347,"thumbnail":{"url":"https://jenkins.io/images/logos/san-diego/san-diego.png"},"image":{"url":"https://cdn1.iconfinder.com/data/icons/basic-ui-icon-rounded-colored/512/icon-41-512.png"},"author":{"name":"Jenkins build node ${NODE_NAME}","url":"https://ci.kernel.live","icon_url":"https://wiki.jenkins.io/download/attachments/2916393/logo.png?version=1&modificationDate=1302753947000&api=v2"}}]}' $WEBHOOK_DISCORD
                """
-            
-            sh """
-                export MESSAGE="%27Your%20${env.BUILD_NUMBER}th%20${currentBuild.fullDisplayName}%20build%20(${env.BUILD_URL})%20on%20${BRANCH_NAME}%20resulted%20with%20Success%27"
-                echo $MESSAGE
-                curl --globoff -i -X GET "https://api.telegram.org/bot617867531:AAFi2qnlfNWDM0evnY3CdRtJySVDAep3OVc/sendMessage?chat_id=420575894&text=${MESSAGE}"
-               """
         }
         unstable {
             sh """
