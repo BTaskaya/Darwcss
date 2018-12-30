@@ -1,5 +1,8 @@
 pipeline {
     agent { docker { image 'python:3.7.1' } }
+    environment {
+        WEBHOOK_DISCORD = credentials('discord-webhook-1')
+    }
     stages {
         stage('prepare') {
             steps {
@@ -62,9 +65,6 @@ pipeline {
         }
     }
     post {
-        environment {
-            WEBHOOK_DISCORD = credentials('discord-webhook-1')
-        }
         always {
             junit 'test_*.xml'
         }
