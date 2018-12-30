@@ -7,17 +7,22 @@ from textwrap import indent
 from colorsys import rgb_to_hls
 from enum import Enum
 
+"""
+noqa:F821 = https://github.com/PyCQA/pyflakes/issues/373
+"""
+
 
 def clean_name(css_name: str) -> str:
-    if css_name.startswith('.'):
-        css_name = css_name.replace('.', 'cls_', 1)
-    elif css_name.startswith('#'):
-        css_name = css_name.replace('#', 'id_', 1)
+    if css_name.startswith("."):
+        css_name = css_name.replace(".", "cls_", 1)
+    elif css_name.startswith("#"):
+        css_name = css_name.replace("#", "id_", 1)
     else:
         pass
-    
+
     return css_name
-        
+
+
 def render(obj: Any) -> str:
     if hasattr(obj, "__render__"):
         return obj.__render__()
@@ -31,7 +36,7 @@ class RenderableObject:
     def __render__(self) -> str:
         pass
 
-    def __add__(self, other: RenderableObject) -> str:  # noqa:F821 https://github.com/PyCQA/pyflakes/issues/373
+    def __add__(self, other: RenderableObject) -> str:  # noqa:F821
         return f"{render(self)} {render(other)}"
 
     def __radd__(self, other: RenderableObject) -> str:  # noqa:F821
@@ -82,37 +87,64 @@ class Style:
     name: str
     value: Any
     important: bool = False
+    meta_cfg: Dict[str, Any] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
         self.value = render(self.value)
         f = currentframe().f_back.f_back  # type: ignore
         l, g = f.f_locals, f.f_globals
-        if l.get("DARWCSS_AUTO", g.get("DARWCSS_AUTO", False)):
-            try:
-                selector_name = l.get(
-                    "DARWCSS_SELECTOR", g.get("DARWCSS_SELECTOR", "selector")
-                )
-                selector = l[selector_name]
-            except KeyError as exc:
-                raise NameError(f"Selector can not found in local namespace.") from exc
+
+        """
+        if not self.meta_cfg:
+            # Search and find closest css object
+            css = [value for value in l.values() if isinstance(value, CSS)]
+            if len(css) < 1:
+                css = [value for value in g.values() if isinstance(value, CSS)]
+                if len(css) != 1:
+                    raise NotImplementedError("Autoadder couldn't determine what to do! Aborting process")
+                else:
+                    self.meta_cfg = css.meta_cfg
+            elif len(css) == 1:
+                self.meta_cfg = css.meta_cfg
             else:
-                selector.append(self)
+                raise NotImplementedError("Autoadder couldn't determine what to do! Aborting process")
+                
+        """
+        if not self.meta_cfg.get(
+            "darwcss_auto", l.get("DARWCSS_AUTO", g.get("DARWCSS_AUTO", False))
+        ):
+            return None
+
+        try:
+            selector = l[
+                self.meta_cfg.get(
+                    "darwcss_selector",
+                    l.get("DARWCSS_SELECTOR", g.get("DARWCSS_SELECTOR", "selector")),
+                )
+            ]
+        except KeyError as exc:
+            raise NameError(f"Selector can not found in local namespace.") from exc
+        else:
+            selector.append(self)
 
 
 @dataclass
 class Selector:
     area: str
     styles: List[Style] = field(default_factory=list)
+    meta_cfg: Dict[str, Any] = field(default_factory=dict)
 
     def __add__(self, other: Style) -> None:
-        self.styles.append(other)
+        self.append(other)
 
-    def __iadd__(self, other: Style) -> Selector: # noqa:F821
-        self + other
+    def __iadd__(self, other: Style) -> Selector:  # noqa:F821
+        self.__add__(other)
         return self
 
-    def append(self, other: Style) -> None:
-        self.styles.append(other)
+    def append(self, style: Style) -> None:
+        if not style.meta_cfg:
+            style.meta_cfg = self.meta_cfg
+        self.styles.append(style)
 
 
 class CSS:
@@ -131,7 +163,7 @@ class CSS:
 
     @contextmanager
     def selector(self, area: str) -> Generator[Selector, None, None]:
-        selector = Selector(area)
+        selector = Selector(area, meta_cfg=self.conf)
         try:
             yield selector
         finally:
@@ -139,6 +171,6 @@ class CSS:
 
     def __getitem__(self, key: str) -> Selector:
         return self.selectors[key]
-        
+
     __call__ = render
     __getattr__ = __getitem__
