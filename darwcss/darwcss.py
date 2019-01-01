@@ -1,15 +1,78 @@
 from __future__ import annotations
 from contextlib import contextmanager
-from dataclasses import dataclass, field
 from typing import List, Any, Union, Optional, Generator, Dict, Tuple
 from inspect import currentframe
 from textwrap import indent
 from colorsys import rgb_to_hls
 from enum import Enum
+from itertools import repeat
+from operator import attrgetter
+from functools import partial
+from dataclasses import dataclass, field, fields, MISSING
+from collections import UserDict
 
 """
 noqa:F821 = https://github.com/PyCQA/pyflakes/issues/373
 """
+
+class ArgumentMapping(UserDict):
+    @classmethod
+    def fill_rest(cls, keys, values, filler=None, cleaner=None):
+        cleaner = cleaner or (lambda value: value)
+        if len(keys) != len(values):
+            requested_keys = keys[len(keys) - len(values):]
+            requested_values = filler(requested_keys) if callable(filler) else repeat(filler, len(requested_keys)) 
+            requested_items = dict(zip(map(cleaner, requested_keys), requested_values))
+        else:
+            requested_items = {}
+        
+        args = dict(zip(map(cleaner, keys), values))
+        return dict(**args, **requested_items)
+        
+def value_generator(fields):
+    values = []
+    for field in fields:
+        if field.default_factory is MISSING:
+            if field.default is MISSING:
+                values.append(None)
+            else:
+                values.append(field.default)
+        else:
+            values.append(field.default_factory())
+    return values
+    
+def init(*values, **kwds):
+    self = kwds.pop('self')
+    fields = kwds.pop('fields')
+    for key, value in kwds.items():
+        fields = tuple([field for field in fields if hasattr(field, 'name') and field.name != key])
+
+    args = ArgumentMapping.fill_rest(fields, values, filler=value_generator, cleaner=lambda value: value.name if hasattr(value, "name") else value)
+    args.update(kwds)
+    
+    for field, value in args.items():
+        if hasattr(field, 'name'):
+            field = field.name
+        setattr(self, field, value)
+    
+    if hasattr(self, '__after_init__'):
+        self.__after_init__(self)
+        
+    return None
+            
+def fake_init(cls, fields):
+    return cls(**dict(zip(map(attrgetter("name"), fields), value_generator(fields))))
+    
+def configurable_dataclass(*args, **kwargs):
+    cls = dataclass(*args, **kwargs)
+    meta_conf = field(default_factory=dict)
+    meta_conf.name = "meta_cfg"
+    
+    cls_fields = fields(cls)
+    cls._self = fake_init(cls, cls_fields)
+    cls.__init__ = partial(init, self=cls, fields=cls_fields + (meta_conf,))
+    cls.__getattr__ = lambda self, name: getattr(self._self, name)
+    return cls
 
 
 def clean_name(css_name: str) -> str:
@@ -82,14 +145,13 @@ class NumericValue(RenderableObject):
         return f"{self.value}{self.unit}"
 
 
-@dataclass
+@configurable_dataclass
 class Style:
     name: str
     value: Any
     important: bool = False
-    meta_cfg: Dict[str, Any] = field(default_factory=dict)
 
-    def __post_init__(self) -> None:
+    def __after_init__(self) -> None:
         self.value = render(self.value)
         f = currentframe().f_back.f_back  # type: ignore
         l, g = f.f_locals, f.f_globals
@@ -128,11 +190,10 @@ class Style:
             selector.append(self)
 
 
-@dataclass
+@configurable_dataclass
 class Selector:
     area: str
     styles: List[Style] = field(default_factory=list)
-    meta_cfg: Dict[str, Any] = field(default_factory=dict)
 
     def __add__(self, other: Style) -> None:
         self.append(other)
