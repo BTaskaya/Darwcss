@@ -1,6 +1,6 @@
 from __future__ import annotations
 from contextlib import contextmanager
-from typing import List, Any, Union, Optional, Generator, Dict, Tuple
+from typing import List, Any, Union, Optional, Generator, Dict, Tuple, Sequence, Callable
 from inspect import currentframe
 from textwrap import indent
 from colorsys import rgb_to_hls
@@ -8,7 +8,7 @@ from enum import Enum
 from itertools import repeat
 from operator import attrgetter
 from functools import partial
-from dataclasses import dataclass, field, fields, MISSING
+from dataclasses import dataclass, field, fields, MISSING, Field
 from collections import UserDict
 
 """
@@ -18,7 +18,7 @@ noqa:F821 = https://github.com/PyCQA/pyflakes/issues/373
 
 class ArgumentMapping(UserDict):
     @classmethod
-    def fill_rest(cls, keys, values, filler=None, cleaner=None):
+    def fill_rest(cls, keys: Sequence, values: Sequence, filler: Callable[[Any], Any] = None, cleaner: Callable[[Any], Any ] = None) -> Dict[Any, Any]:
         cleaner = cleaner or (lambda value: value)
         if len(keys) != len(values):
             requested_keys = keys[len(keys) - len(values):]
@@ -35,20 +35,20 @@ class ArgumentMapping(UserDict):
         return dict(**args, **requested_items)
 
 
-def value_generator(fields):
-    values = []
+def value_generator(fields: Sequence[Field]) -> List[Any]:
+    values: List[Any] = []
     for field in fields:
-        if field.default_factory is MISSING:
+        if field.default_factory is MISSING: # type: ignore
             if field.default is MISSING:
                 values.append(None)
             else:
                 values.append(field.default)
         else:
-            values.append(field.default_factory())
+            values.append(field.default_factory()) # type: ignore
     return values
 
 
-def init(*values, **kwds):
+def init(*values, **kwds) -> None:
     self = kwds.pop("self")
     fields = kwds.pop("fields")
     for key, value in kwds.items():
@@ -75,24 +75,18 @@ def init(*values, **kwds):
     return None
 
 
-def fake_init(cls, fields):
-    return cls(**dict(zip(map(attrgetter("name"), fields), value_generator(fields))))
+def fake_init(cls: type, fields: Sequence[Field]) -> object:
+    return cls(**dict(zip(map(attrgetter("name"), fields), value_generator(fields)))) # type: ignore
 
-
-def attr_get(self, name):
-    print(self, name)
-    return getattr(self._self, name)
-
-
-def configurable_dataclass(*args, **kwargs):
+def configurable_dataclass(*args, **kwargs) -> type:
     cls = dataclass(*args, **kwargs)
-    meta_conf = field(default_factory=dict)
+    meta_conf: Field = field(default_factory=dict) # type: ignore
     meta_conf.name = "meta_cfg"
 
     cls_fields = fields(cls)
     cls._self = fake_init(cls, cls_fields)
     cls.__init__ = partial(init, self=cls, fields=cls_fields + (meta_conf,))
-    cls.__getattr__ = lambda self, name: attr_get(self._self, name)
+    cls.__getattr__ = lambda self, name: getattr(self._self, name)
     return cls
 
 
