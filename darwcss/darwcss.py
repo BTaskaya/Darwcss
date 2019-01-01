@@ -10,11 +10,11 @@ from operator import attrgetter
 from functools import partial
 from dataclasses import dataclass, field, fields, MISSING
 from collections import UserDict
-from random import randint
 
 """
 noqa:F821 = https://github.com/PyCQA/pyflakes/issues/373
 """
+
 
 class ArgumentMapping(UserDict):
     @classmethod
@@ -22,14 +22,19 @@ class ArgumentMapping(UserDict):
         cleaner = cleaner or (lambda value: value)
         if len(keys) != len(values):
             requested_keys = keys[len(keys) - len(values):]
-            requested_values = filler(requested_keys) if callable(filler) else repeat(filler, len(requested_keys)) 
+            requested_values = (
+                filler(requested_keys)
+                if callable(filler)
+                else repeat(filler, len(requested_keys))
+            )
             requested_items = dict(zip(map(cleaner, requested_keys), requested_values))
         else:
             requested_items = {}
-        
+
         args = dict(zip(map(cleaner, keys), values))
         return dict(**args, **requested_items)
-        
+
+
 def value_generator(fields):
     values = []
     for field in fields:
@@ -41,38 +46,49 @@ def value_generator(fields):
         else:
             values.append(field.default_factory())
     return values
-    
-def init(*values, **kwds):
-    self = kwds.pop('self')
-    fields = kwds.pop('fields')
-    for key, value in kwds.items():
-        fields = tuple([field for field in fields if hasattr(field, 'name') and field.name != key])
 
-    args = ArgumentMapping.fill_rest(fields, values, filler=value_generator, cleaner=lambda value: value.name if hasattr(value, "name") else value)
+
+def init(*values, **kwds):
+    self = kwds.pop("self")
+    fields = kwds.pop("fields")
+    for key, value in kwds.items():
+        fields = tuple(
+            [field for field in fields if hasattr(field, "name") and field.name != key]
+        )
+
+    args = ArgumentMapping.fill_rest(
+        fields,
+        values,
+        filler=value_generator,
+        cleaner=lambda value: value.name if hasattr(value, "name") else value,
+    )
     args.update(kwds)
-    
+
     for field, value in args.items():
-        if hasattr(field, 'name'):
+        if hasattr(field, "name"):
             field = field.name
         setattr(self, field, value)
-    
-    if hasattr(self, '__after_init__'):
+
+    if hasattr(self, "__after_init__"):
         self.__after_init__(self)
-        
+
     return None
-            
+
+
 def fake_init(cls, fields):
     return cls(**dict(zip(map(attrgetter("name"), fields), value_generator(fields))))
+
 
 def attr_get(self, name):
     print(self, name)
     return getattr(self._self, name)
-    
+
+
 def configurable_dataclass(*args, **kwargs):
     cls = dataclass(*args, **kwargs)
     meta_conf = field(default_factory=dict)
     meta_conf.name = "meta_cfg"
-    
+
     cls_fields = fields(cls)
     cls._self = fake_init(cls, cls_fields)
     cls.__init__ = partial(init, self=cls, fields=cls_fields + (meta_conf,))
@@ -158,7 +174,7 @@ class Style:
 
     def __post_init__(self) -> None:
         self.value = render(self.value)
-        f = currentframe().f_back.f_back # type: ignore
+        f = currentframe().f_back.f_back  # type: ignore
         l, g = f.f_locals, f.f_globals
         if l.get("DARWCSS_AUTO", g.get("DARWCSS_AUTO", False)):
             try:
@@ -186,7 +202,8 @@ class Selector:
 
     def append(self, style: Style) -> None:
         self.styles.append(style)
-        
+
+
 class CSS:
     def __init__(self, conf: Optional[Dict] = None) -> None:
         self.selectors: Dict[str, Selector] = {}
@@ -203,7 +220,7 @@ class CSS:
 
     @contextmanager
     def selector(self, area: str) -> Generator[Selector, None, None]:
-        selector = Selector(area, meta_cfg=self.conf) # type: ignore
+        selector = Selector(area, meta_cfg=self.conf)  # type: ignore
         try:
             yield selector
         finally:
