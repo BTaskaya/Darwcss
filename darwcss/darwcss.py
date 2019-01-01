@@ -203,7 +203,7 @@ class CSS:
 
     @contextmanager
     def selector(self, area: str) -> Generator[Selector, None, None]:
-        selector = Selector(area, meta_cfg=self.conf)
+        selector = Selector(area, meta_cfg=self.conf) # type: ignore
         try:
             yield selector
         finally:
