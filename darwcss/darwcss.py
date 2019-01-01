@@ -1,6 +1,16 @@
 from __future__ import annotations
 from contextlib import contextmanager
-from typing import List, Any, Union, Optional, Generator, Dict, Tuple, Sequence, Callable
+from typing import (
+    List,
+    Any,
+    Union,
+    Optional,
+    Generator,
+    Dict,
+    Tuple,
+    Sequence,
+    Callable,
+)
 from inspect import currentframe
 from textwrap import indent
 from colorsys import rgb_to_hls
@@ -18,7 +28,13 @@ noqa:F821 = https://github.com/PyCQA/pyflakes/issues/373
 
 class ArgumentMapping(UserDict):
     @classmethod
-    def fill_rest(cls, keys: Sequence, values: Sequence, filler: Callable[[Any], Any] = None, cleaner: Callable[[Any], Any ] = None) -> Dict[Any, Any]:
+    def fill_rest(
+        cls,
+        keys: Sequence,
+        values: Sequence,
+        filler: Callable[[Any], Any] = None,
+        cleaner: Callable[[Any], Any] = None,
+    ) -> Dict[Any, Any]:
         cleaner = cleaner or (lambda value: value)
         if len(keys) != len(values):
             requested_keys = keys[len(keys) - len(values):]
@@ -38,13 +54,13 @@ class ArgumentMapping(UserDict):
 def value_generator(fields: Sequence[Field]) -> List[Any]:
     values: List[Any] = []
     for field in fields:
-        if field.default_factory is MISSING: # type: ignore
+        if field.default_factory is MISSING:  # type: ignore
             if field.default is MISSING:
                 values.append(None)
             else:
                 values.append(field.default)
         else:
-            values.append(field.default_factory()) # type: ignore
+            values.append(field.default_factory())  # type: ignore
     return values
 
 
@@ -76,11 +92,14 @@ def init(*values, **kwds) -> None:
 
 
 def fake_init(cls: type, fields: Sequence[Field]) -> object:
-    return cls(**dict(zip(map(attrgetter("name"), fields), value_generator(fields)))) # type: ignore
+    return cls(
+        **dict(zip(map(attrgetter("name"), fields), value_generator(fields)))  # type: ignore
+    )  
+
 
 def configurable_dataclass(*args, **kwargs) -> type:
     cls = dataclass(*args, **kwargs)
-    meta_conf: Field = field(default_factory=dict) # type: ignore
+    meta_conf: Field = field(default_factory=dict)  # type: ignore
     meta_conf.name = "meta_cfg"
 
     cls_fields = fields(cls)
