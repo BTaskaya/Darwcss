@@ -10,6 +10,7 @@ from operator import attrgetter
 from functools import partial
 from dataclasses import dataclass, field, fields, MISSING
 from collections import UserDict
+from random import randint
 
 """
 noqa:F821 = https://github.com/PyCQA/pyflakes/issues/373
@@ -62,6 +63,10 @@ def init(*values, **kwds):
             
 def fake_init(cls, fields):
     return cls(**dict(zip(map(attrgetter("name"), fields), value_generator(fields))))
+
+def attr_get(self, name):
+    print(self, name)
+    return getattr(self._self, name)
     
 def configurable_dataclass(*args, **kwargs):
     cls = dataclass(*args, **kwargs)
@@ -71,7 +76,7 @@ def configurable_dataclass(*args, **kwargs):
     cls_fields = fields(cls)
     cls._self = fake_init(cls, cls_fields)
     cls.__init__ = partial(init, self=cls, fields=cls_fields + (meta_conf,))
-    cls.__getattr__ = lambda self, name: getattr(self._self, name)
+    cls.__getattr__ = lambda self, name: attr_get(self._self, name)
     return cls
 
 
@@ -145,49 +150,26 @@ class NumericValue(RenderableObject):
         return f"{self.value}{self.unit}"
 
 
-@configurable_dataclass
+@dataclass
 class Style:
     name: str
     value: Any
     important: bool = False
 
-    def __after_init__(self) -> None:
+    def __post_init__(self) -> None:
         self.value = render(self.value)
-        f = currentframe().f_back.f_back  # type: ignore
+        f = currentframe().f_back.f_back # type: ignore
         l, g = f.f_locals, f.f_globals
-
-        """
-        if not self.meta_cfg:
-            # Search and find closest css object
-            css = [value for value in l.values() if isinstance(value, CSS)]
-            if len(css) < 1:
-                css = [value for value in g.values() if isinstance(value, CSS)]
-                if len(css) != 1:
-                    raise NotImplementedError("Autoadder couldn't determine what to do! Aborting process")
-                else:
-                    self.meta_cfg = css.meta_cfg
-            elif len(css) == 1:
-                self.meta_cfg = css.meta_cfg
-            else:
-                raise NotImplementedError("Autoadder couldn't determine what to do! Aborting process")
-                
-        """
-        if not self.meta_cfg.get(
-            "darwcss_auto", l.get("DARWCSS_AUTO", g.get("DARWCSS_AUTO", False))
-        ):
-            return None
-
-        try:
-            selector = l[
-                self.meta_cfg.get(
-                    "darwcss_selector",
-                    l.get("DARWCSS_SELECTOR", g.get("DARWCSS_SELECTOR", "selector")),
+        if l.get("DARWCSS_AUTO", g.get("DARWCSS_AUTO", False)):
+            try:
+                selector_name = l.get(
+                    "DARWCSS_SELECTOR", g.get("DARWCSS_SELECTOR", "selector")
                 )
-            ]
-        except KeyError as exc:
-            raise NameError(f"Selector can not found in local namespace.") from exc
-        else:
-            selector.append(self)
+                selector = l[selector_name]
+            except KeyError as exc:
+                raise NameError(f"Selector can not found in local namespace.") from exc
+            else:
+                selector.append(self)
 
 
 @configurable_dataclass
@@ -203,11 +185,8 @@ class Selector:
         return self
 
     def append(self, style: Style) -> None:
-        if not style.meta_cfg:
-            style.meta_cfg = self.meta_cfg
         self.styles.append(style)
-
-
+        
 class CSS:
     def __init__(self, conf: Optional[Dict] = None) -> None:
         self.selectors: Dict[str, Selector] = {}
