@@ -1,9 +1,7 @@
 pipeline {
     agent { docker { image 'python:3.7.1' } }
     environment {
-        WEBHOOK_DISCORD = credentials('discord-webhook-1')
-        TELEGRAM_TOKEN = credentials('telegram-1')
-        TELEGRAM_CHAT = credentials('telegram-chat')
+        GATEWAY = credentials('gateway_key')
     }
     stages {
         stage('prepare') {
@@ -57,11 +55,10 @@ pipeline {
             }
         }
         stage('deploy_docs') {
-            environment {
-                TOKEN = credentials('rtd-token')
-            }
             steps {
-                sh 'curl -X POST -d branches=master -d token=$TOKEN https://readthedocs.org/api/v2/webhook/darwcss/$TOKEN'
+                sh """
+                curl -XPOST -H 'Authorization: gateway: ${GATEWAY}' -H "Content-type: application/json" -d '{"name": "darwcss","branch": "${BRANCH_NAME}"}' 'https://gateway.kernel.live/poster/rtd'
+                """
             }
         }
     }
@@ -71,24 +68,21 @@ pipeline {
         }
         success {
             sh """
-                curl -H "Content-Type: application/json" \
-                -X POST \
-                -d '{"content":"Jenkins information","embeds":[{"title":"Jenkins build ","description":"Your ${env.BUILD_NUMBER}th ${currentBuild.fullDisplayName} [build](${env.BUILD_URL}) on ${BRANCH_NAME} resulted with Success","url":"${env.BUILD_URL}","color":65347,"thumbnail":{"url":"https://jenkins.io/images/logos/san-diego/san-diego.png"},"image":{"url":"https://cdn1.iconfinder.com/data/icons/basic-ui-icon-rounded-colored/512/icon-41-512.png"},"author":{"name":"Jenkins build node ${NODE_NAME}","url":"https://ci.kernel.live","icon_url":"https://wiki.jenkins.io/download/attachments/2916393/logo.png?version=1&modificationDate=1302753947000&api=v2"}}]}' $WEBHOOK_DISCORD
-               """
+            curl -XPOST -H 'Authorization: gateway: ${GATEWAY}' -H "Content-type: application/json" -d '{"name": "darwcss-jenkins","b_status": "success","b_name": "${BUILD_DISPLAY_NAME}"}' 'https://gateway.kernel.live/poster/discord'
+            curl -XPOST -H 'Authorization: gateway: ${GATEWAY}' -H "Content-type: application/json" -d '{"name": "darwcss-jenkins","b_status": "success","b_name": "${BUILD_DISPLAY_NAME}"}' 'https://gateway.kernel.live/poster/telegram'            
+            """
         }
         unstable {
             sh """
-                curl -H "Content-Type: application/json" \
-                -X POST \
-                -d '{"content":"Jenkins information","embeds":[{"title":"Jenkins build ","description":"Your ${env.BUILD_NUMBER}th ${currentBuild.fullDisplayName} [build](${env.BUILD_URL}) on ${BRANCH_NAME} resulted with Unstability","url":"${env.BUILD_URL}","color":16752128,"thumbnail":{"url":"https://jenkins.io/images/logos/san-diego/san-diego.png"},"image":{"url":"https://cdn1.iconfinder.com/data/icons/map-objects/154/map-object-warning-attention-point-512.png"},"author":{"name":"Jenkins build node ${NODE_NAME}","url":"https://ci.kernel.live","icon_url":"https://wiki.jenkins.io/download/attachments/2916393/logo.png?version=1&modificationDate=1302753947000&api=v2"}}]}' $WEBHOOK_DISCORD
-               """
+            curl -XPOST -H 'Authorization: gateway: ${GATEWAY}' -H "Content-type: application/json" -d '{"name": "darwcss-jenkins","b_status": "unstable","b_name": "${BUILD_DISPLAY_NAME}"}' 'https://gateway.kernel.live/poster/discord'
+            curl -XPOST -H 'Authorization: gateway: ${GATEWAY}' -H "Content-type: application/json" -d '{"name": "darwcss-jenkins","b_status": "unstable","b_name": "${BUILD_DISPLAY_NAME}"}' 'https://gateway.kernel.live/poster/telegram'            
+            """
         }
         failure {
             sh """
-                curl -H "Content-Type: application/json" \
-                -X POST \
-                -d '{"content":"Jenkins information","embeds":[{"title":"Jenkins build ","description":"Your ${env.BUILD_NUMBER}th ${currentBuild.fullDisplayName} [build](${env.BUILD_URL}) on ${BRANCH_NAME} resulted with Failure","url":"${env.BUILD_URL}","color":16711680,"thumbnail":{"url":"https://jenkins.io/images/logos/san-diego/san-diego.png"},"image":{"url":"https://cdn4.iconfinder.com/data/icons/unigrid-flat-basic/90/019_023_link_chain_broken_disconnect_2-512.png"},"author":{"name":"Jenkins build node ${NODE_NAME}","url":"https://ci.kernel.live","icon_url":"https://wiki.jenkins.io/download/attachments/2916393/logo.png?version=1&modificationDate=1302753947000&api=v2"}}]}' $WEBHOOK_DISCORD
-               """
+            curl -XPOST -H 'Authorization: gateway: ${GATEWAY}' -H "Content-type: application/json" -d '{"name": "darwcss-jenkins","b_status": "fail","b_name": "${BUILD_DISPLAY_NAME}"}' 'https://gateway.kernel.live/poster/discord'
+            curl -XPOST -H 'Authorization: gateway: ${GATEWAY}' -H "Content-type: application/json" -d '{"name": "darwcss-jenkins","b_status": "fail","b_name": "${BUILD_DISPLAY_NAME}"}' 'https://gateway.kernel.live/poster/telegram'            
+            """        
         }
     }
 }
